@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Base64
 {
@@ -24,6 +25,32 @@ namespace Base64
             .ToDictionary(pair => pair.Key, pair => pair.Value);
 
         /// <summary>
+        /// 文字 encoding を指定して文字列を Base64 エンコードします
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="encoding"></param>
+        /// <returns></returns>
+        public static IEnumerable<char> Encode(string source, Encoding encoding)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (source == string.Empty)
+            {
+                return Enumerable.Empty<char>();
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(nameof(encoding));
+            }
+
+            return EncodeInner(encoding.GetBytes(source));
+        }
+
+        /// <summary>
         /// byte 列を Base64 エンコードします
         /// </summary>
         public static IEnumerable<char> Encode(IEnumerable<byte> source)
@@ -34,6 +61,24 @@ namespace Base64
             }
 
             return EncodeInner(source);
+        }
+
+        /// <summary>
+        /// 文字 encoding を指定して Base64 デコードします
+        /// </summary>
+        public static string Decode(IEnumerable<char> source, Encoding encoding)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(nameof(encoding));
+            }
+
+            return encoding.GetString(DecodeInner(source).ToArray());
         }
 
         /// <summary>

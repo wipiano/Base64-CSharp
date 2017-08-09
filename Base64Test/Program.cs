@@ -9,13 +9,14 @@ namespace Base64Test
     {
         static void Main(string[] args)
         {
-            // "ABCDEFG"
-            var bytes = Encoding.ASCII.GetBytes("ABCDEFG");
-            string encoded = string.Join(string.Empty, Base64Encoder.Encode(bytes));
-            // "QUJDREVGRw=="
-            Console.WriteLine(encoded);
-            // "ABCDEFG"
-            Console.WriteLine(Encoding.ASCII.GetString(Base64Encoder.Decode(encoded).ToArray()));
+            // "ABCDEFG" -> "QUJDREVGRw=="
+            var encoded = Base64Encoder.Encode("ABCDEFG", Encoding.ASCII).ToArray();
+
+            // 4 文字ずつ区切って出してみる
+            var formatted = string.Join(string.Empty, encoded.Select((v, i) => ((i + 1) % 4 == 0) ? $"{v} " : $"{v}"));
+            Console.WriteLine(formatted);
+
+            Console.WriteLine(Base64Encoder.Decode(encoded, Encoding.ASCII));
             Console.Read();
         }
     }
