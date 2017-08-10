@@ -100,75 +100,49 @@ namespace Base64
         private static IEnumerable<char> EncodeInner(IEnumerable<byte> source)
         {
             // char の個数が 4 の倍数になるように、足りない分は '=' で補って変換をおこないます
-            using (var enumerator = SplitBySixBit(source).Select(b => Base64Chars[b]).GetEnumerator())
-            {
-                bool hasNext = true;
-                int count = 0;
-                while (hasNext)
-                {
-                    if (hasNext = enumerator.MoveNext())
-                    {
-                        count++;
-                        yield return enumerator.Current;
-                    }
-
-                    if (count == 4) count = 0;
-                }
-
-                if (count == 0)
-                {
-                    yield break;
-                }
-
-                for (var i = count; i < 4; i++)
-                {
-                    yield return '=';
-                }
-            }
-        }
-
-        /// <summary>
-        /// byte 列を 6 ビットずつに分割します
-        /// </summary>
-        private static IEnumerable<byte> SplitBySixBit(IEnumerable<byte> bytes)
-        {
+            int mod4 = 0;
             int current = 0;
             byte nextBitCount = 0;
-            using (var enumerator = bytes.GetEnumerator())
+
+            foreach (var item in source)
             {
-                while (true)
+                // 3 回に 1 度、すでに 6 bit たまった状態になっているのでだしとく
+                if (nextBitCount == 6)
                 {
-                    if (!enumerator.MoveNext())
-                    {
-                        // あまった current を吐き出す処理
-                        if (nextBitCount > 0)
-                        {
-                            // 6 ビットに満たない分は右側を 0 うめして返す
-                            yield return (byte) (current << (6 - nextBitCount));
-                        }
-                        yield break;
-                    }
+                    yield return Base64Chars[current];
+                    current = 0;
+                    nextBitCount = 0;
 
-                    // 3 回に 1 度、すでに 6 bit たまった状態になっているのでだしとく
-                    if (nextBitCount == 6)
-                    {
-                        yield return (byte) current;
-                        current = 0;
-                        nextBitCount = 0;
-                    }
-
-                    // 下位ビットに追加
-                    current = (current << 8) | enumerator.Current;
-                    // 今回の yield return の対象にならないビット数
-                    // 8 bit 増えて 6 bit へるので 2 ビット増加
-                    nextBitCount += 2;
-
-                    // 今回出力の対象にならない分は右シフトで落として return
-                    yield return (byte)(current >> nextBitCount);
-
-                    // 今回出力の対象にならなかったビットだけを立てる
-                    current &= (1 << nextBitCount) - 1;
+                    mod4 = (mod4 == 3) ? 0 : mod4 + 1;
                 }
+
+                // 下位ビットに追加
+                current = (current << 8) | item;
+                
+                // 今回の yield return の対象にならないビット数
+                // 8 bit 増えて 6 bit へるので 2 ビット増加
+                nextBitCount += 2;
+
+                // 今回出力の対象にならない分は右シフトで落として return
+                yield return Base64Chars[current >> nextBitCount];
+
+                // 今回出力の対象にならなかったビットだけを立てる
+                current &= (1 << nextBitCount) - 1;
+
+                mod4 = (mod4 == 3) ? 0 : mod4 + 1;
+            }
+
+            // あまった current を吐き出す処理
+            if (nextBitCount > 0)
+            {
+                // 6 ビットに満たない分は右側を 0 うめして返す
+                yield return Base64Chars[current << (6 - nextBitCount)];
+                mod4 = (mod4 == 3) ? 0 : mod4 + 1;
+            }
+
+            for (var i = mod4; i > 0 && i < 4; i++)
+            {
+                yield return '=';
             }
         }
 
@@ -183,33 +157,24 @@ namespace Base64
             // バイト列の長さが 6 の倍数にならなかった分は最後の数ビットに 0 が挿入されている可能性がある
             var separated = source.Where(c => c != '=').Select(c => DecodeDictionary[c]);
 
-            using (var enumerator = separated.GetEnumerator())
+            int current = 0;
+            byte bitsCount = 0;
+
+            // 8bit 分割して返す
+
+            foreach (var item in separated)
             {
-                // 8bit 分割して返す
-                int current = 0;
-                byte bitsCount = 0;
-                bool hasNext = true;
+                current = (current << 6) | item;
+                bitsCount += 6;
 
-                while (hasNext)
+                if (bitsCount >= 8)
                 {
-                    if (!(hasNext = enumerator.MoveNext()))
-                    {
-                        yield break;
-                    }
-
-                    current = (current << 6) | enumerator.Current;
-                    bitsCount += 6;
-
-                    if (bitsCount >= 8)
-                    {
-                        bitsCount -= 8;
-                        yield return (byte) (current >> bitsCount);
-                    }
+                    bitsCount -= 8;
+                    yield return (byte)(current >> bitsCount);
                 }
-
-                // 最後の 8 bit に満たないものは 0 埋めするために挿入されたはずなので返さない
             }
 
+            // 最後の 8 bit に満たないものは 0 埋めするために挿入されたはずなので返さない
         }
     }
 }
