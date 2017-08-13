@@ -16,9 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Base64">
-      <HintPath>..\Base64\bin\Release\netstandard1.4\Base64.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\Base64\Base64.csproj" />
   </ItemGroup>
 
 </Project>
