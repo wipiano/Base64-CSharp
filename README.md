@@ -1,6 +1,8 @@
 # Base64 for C#
-C# 用の Base64 エンコーダ
-勉強用に作ったもの．性能評価などはしてない．
+[![Build status](https://ci.appveyor.com/api/projects/status/2x0s3o8ncy304gpk?svg=true)](https://ci.appveyor.com/project/wipiano/base64-csharp)
+
+C# 用の Base64 エンコーダ．
+勉強用に作ったもの．
 
 ## Encode
 ### string
